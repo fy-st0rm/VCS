@@ -1,48 +1,32 @@
 #include "vcs_socket.h"
 #include "const.h"
+#include "dict.h"
+#include "config.h"
 
 #define PORT 8080
 static char* sv_ip = "127.0.0.1";
 
-// vcs init .					; initializes the directory with config files
-// vcs new-repo ip:repo-name  ; creates a remote repository in the server
+//TODO: [ ] Some sort of diff tracker
+//TODO: [ ] Read and write of the config
 
-void generate_config()
-{
-	FILE* fd;
-	char* def_config = "HERE SHOULD BE DEFAULT CONFIGS";
-
-	fd = fopen(".vcs", "w");
-	if (!fd)
-	{
-		fprintf(stderr, "[ERROR]: Failed to generate config.\n");
-		exit(1);
-	}
-	fputs(def_config, fd); 
-	fclose(fd);
-}
+// [X] vcs init .					; initializes the directory with config files
+// [X] vcs new-repo ip:repo-name  ; creates a remote repository in the server
+// [ ] vcs status
+// [ ] vcs add [file]
+// [ ] vcs commit [msg]
+// [ ] vcs push
 
 int main(int argc, char** argv)
 {
-	/*
-	int client_fd; 
-
-	// Server address
-	struct sockaddr_in address;
-	address.sin_family = AF_INET;
-	address.sin_port = htons(PORT);
-	inet_pton(AF_INET, ip, &address.sin_addr);
-
-	client_fd = connect_sv(address);
-	printf("%d\n", client_fd);
-	*/
-	
+	Dict* config = dict_new(100);
+	// Parsing the cmd line arguments
 	for (int i = 0; i < argc; i++)
 	{
 		char* token = argv[i];
 		if (!strcmp(token, INIT))
 		{
 			generate_config();
+			read_config(config);
 		}
 		else if (!strcmp(token, NEW_REPO))
 		{
@@ -75,12 +59,49 @@ int main(int argc, char** argv)
 
 			if (!strcmp(buffer, ERROR))
 			{
-				printf("ERROR!\n");
+				printf("[ERROR]: Repository with name `%s` already exists. Please try another name.\n", name);
 			}
 			else if (!strcmp(buffer, SUCESS))
 			{
-				printf("SUCESS\n");
+				// Generating repo name in config file
+				size_t k_sz = strlen(REPO_NAME) * sizeof(char);
+				size_t v_sz = strlen(name) * sizeof(char);
+
+				// Saving the server ip
+				size_t s_sz = strlen(SV_IP) * sizeof(char);
+				size_t i_sz = strlen(ip) * sizeof(char);
+
+				read_config(config);
+				dict_pop(config, (void*) REPO_NAME, k_sz);  
+				dict_insert(config, (void*) REPO_NAME, (void*) name, k_sz, v_sz);
+				dict_insert(config, (void*) SV_IP, (void*) ip, s_sz, i_sz);
+				save_config(config);
+
+				printf("[SUCESS]: Sucessfully create a repository with name `%s`.\n", name);
 			}
 		}
+		else if (!strcmp(token, STATUS))
+		{
+			// getting all the files to get the untracked files 
+			char** test = NULL;
+			int idx = 0;
+			recur_list_dir(".", test, &test, &idx);
+
+			// Loading the config
+			read_config(config);
+			dict_print(config);
+			char* repo_name = dict_get(config, (void*) REPO_NAME, strlen(REPO_NAME) * sizeof(char));
+			char* sv_ip = dict_get(config, (void*) SV_IP, strlen(SV_IP) * sizeof(char));
+
+			// TODO: find the modified files
+
+			// Ask to the server
+			int client = connect_sv(sv_ip, PORT);
+			char msg[BUFF_CAP] = {0};
+			sprintf(msg, "%s %s", STATUS, repo_name);
+			send(client, msg, strlen(msg), 0);
+		}
 	}
+
+	dict_clean(config);
 }

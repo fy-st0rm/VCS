@@ -29,8 +29,11 @@
 #define DELAY    0.1
 
 // Tokens
-#define INIT     "init"
-#define NEW_REPO "new-repo"
+#define INIT       "init"
+#define NEW_REPO   "new-repo"
+#define STATUS     "status"
+#define REPO_NAME  "REPO_NAME"
+#define SV_IP      "SERVER_IP"
 
 // FLAGS
 #define ERROR	"error" 

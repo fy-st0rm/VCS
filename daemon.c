@@ -48,6 +48,28 @@ void handle_client(Args* arg)
 				send(conn, SUCESS, sizeof(SUCESS), 0);	
 			}
 		}
+		else if (!strcmp(token, STATUS))
+		{
+			char* repo = strtok(NULL, " ");
+			printf("ASKED FOR REPO: %s\n", repo);
+
+			char path[strlen(repo) + 3];
+			strcpy(path, arg->path);
+			strcat(path, "/");
+			strcat(path, repo);
+
+			// Getting all the files from that repo
+			char** test = NULL;
+			int idx = 0;
+			recur_list_dir(path, test, &test, &idx);
+			for (int i = 0; i < idx; i++)
+			{
+				printf("%s\n", test[i]);
+			}
+
+			// TODO: check for deleted files
+			// TODO: check for modified files
+		}
 	}
 	printf("%d disconnected.\n", conn);
 	close(conn);

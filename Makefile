@@ -1,5 +1,5 @@
-CLI_SRC = vcs.c vcs_socket.c util.c
-DAE_SRC = daemon.c vcs_socket.c util.c
+CLI_SRC = vcs_socket.c util.c dict.c config.c vcs.c
+DAE_SRC = daemon.c vcs_socket.c util.c dict.c config.c
 OBJ = *.o
 CLI_EXE = vcs
 DAE_EXE = vcs_daemon
